@@ -20,7 +20,10 @@ export async function getDayData(dateKey) {
 
 export async function saveDayData(dateKey, dayData) {
   const user = getCurrentUser()
-  if (!user) return
+  if (!user) {
+    console.warn('Aucun utilisateur connecté, impossible de sauvegarder les données')
+    return
+  }
   
   try {
     const existing = await db.dayData
@@ -29,10 +32,13 @@ export async function saveDayData(dateKey, dayData) {
       .first()
     
     if (existing) {
-      await db.dayData.update(existing.id, {
+      const updated = await db.dayData.update(existing.id, {
         data: dayData,
         updatedAt: new Date()
       })
+      if (updated === 0) {
+        console.warn('Aucun enregistrement mis à jour pour', dateKey)
+      }
     } else {
       await db.dayData.add({
         userId: user.id,
@@ -44,6 +50,8 @@ export async function saveDayData(dateKey, dayData) {
     }
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des données:', error)
+    // Relancer l'erreur pour permettre à l'appelant de la gérer si nécessaire
+    throw error
   }
 }
 
@@ -74,25 +82,38 @@ export async function savePillars(pillars) {
   if (!user) return
   
   try {
-    // Supprimer les anciens piliers de l'utilisateur
-    await db.pillars
+    // Récupérer les piliers existants pour les mettre à jour ou en ajouter de nouveaux
+    const existingRecords = await db.pillars
       .where('userId')
       .equals(user.id)
-      .delete()
+      .toArray()
     
-    // Ajouter les nouveaux piliers
+    // Créer un map des piliers existants par pillarId
+    const existingMap = new Map(existingRecords.map(r => [r.pillarId, r]))
+    
+    // Préparer les données à sauvegarder
     const pillarsArray = Object.entries(pillars).map(([pillarId, data]) => ({
+      id: existingMap.get(pillarId)?.id, // Conserver l'id si existe
       userId: user.id,
       pillarId,
       data,
       updatedAt: new Date()
     }))
     
+    // Utiliser bulkPut pour mettre à jour ou ajouter
     if (pillarsArray.length > 0) {
-      await db.pillars.bulkAdd(pillarsArray)
+      await db.pillars.bulkPut(pillarsArray)
+    }
+    
+    // Supprimer les piliers qui n'existent plus
+    const currentPillarIds = new Set(Object.keys(pillars))
+    const toDelete = existingRecords.filter(r => !currentPillarIds.has(r.pillarId))
+    if (toDelete.length > 0) {
+      await db.pillars.bulkDelete(toDelete.map(r => r.id))
     }
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des piliers:', error)
+    throw error
   }
 }
 
