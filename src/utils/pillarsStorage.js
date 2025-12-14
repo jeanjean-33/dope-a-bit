@@ -111,3 +111,7 @@ export function resetPillarsToDefault() {
   return DEFAULT_PILLARS
 }
 
+export function getDefaultPillars() {
+  return DEFAULT_PILLARS
+}
+
