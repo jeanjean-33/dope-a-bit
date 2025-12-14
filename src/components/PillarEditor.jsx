@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Moon, Activity, BookOpen, Sun, ShoppingCart, Flame, Smartphone, Plus, X, Trash2, Edit2, Save } from 'lucide-react'
 import { cn } from '../utils/cn'
 
@@ -26,10 +26,16 @@ export function PillarEditor({ pillar, onSave, onDelete }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedPillar, setEditedPillar] = useState(pillar)
   const [newTask, setNewTask] = useState('')
-  
+
+  // Synchroniser editedPillar avec pillar quand les props changent
+  useEffect(() => {
+    setEditedPillar(pillar)
+  }, [pillar])
+
   const Icon = iconMap[editedPillar.icon] || Moon
   
   const handleSave = () => {
+    console.log('PillarEditor: Sauvegarde du pilier:', editedPillar)
     onSave(editedPillar)
     setIsEditing(false)
   }

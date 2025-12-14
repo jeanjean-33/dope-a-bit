@@ -22,11 +22,13 @@ export function ManageView() {
   const hasChanges = JSON.stringify(pillars) !== JSON.stringify(savedPillars)
 
   const handleSavePillar = async (updatedPillar) => {
+    console.log('ManageView: Sauvegarde du pilier:', updatedPillar)
     try {
       const newPillars = {
         ...pillars,
         [updatedPillar.id]: updatedPillar
       }
+      console.log('ManageView: Nouveaux piliers:', newPillars)
       setPillars(newPillars)
       await saveDBPillars(newPillars)
       setSavedPillars(newPillars) // Met à jour les piliers sauvegardés
