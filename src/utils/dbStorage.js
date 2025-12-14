@@ -80,17 +80,17 @@ export async function getAllDayData() {
 export async function savePillars(pillars) {
   const user = getCurrentUser()
   if (!user) return
-  
+
   try {
     // Récupérer les piliers existants pour les mettre à jour ou en ajouter de nouveaux
     const existingRecords = await db.pillars
       .where('userId')
       .equals(user.id)
       .toArray()
-    
+
     // Créer un map des piliers existants par pillarId
     const existingMap = new Map(existingRecords.map(r => [r.pillarId, r]))
-    
+
     // Préparer les données à sauvegarder
     const pillarsArray = Object.entries(pillars).map(([pillarId, data]) => ({
       id: existingMap.get(pillarId)?.id, // Conserver l'id si existe
@@ -99,17 +99,27 @@ export async function savePillars(pillars) {
       data,
       updatedAt: new Date()
     }))
-    
+
     // Utiliser bulkPut pour mettre à jour ou ajouter
     if (pillarsArray.length > 0) {
       await db.pillars.bulkPut(pillarsArray)
     }
-    
+
     // Supprimer les piliers qui n'existent plus
     const currentPillarIds = new Set(Object.keys(pillars))
     const toDelete = existingRecords.filter(r => !currentPillarIds.has(r.pillarId))
     if (toDelete.length > 0) {
       await db.pillars.bulkDelete(toDelete.map(r => r.id))
+    }
+
+    console.log('Piliers sauvegardés avec succès dans IndexedDB')
+
+    // Synchroniser avec localStorage pour la compatibilité
+    try {
+      const { savePillars: saveToLocalStorage } = await import('./pillarsStorage')
+      saveToLocalStorage(pillars)
+    } catch (syncError) {
+      console.warn('Erreur lors de la synchronisation avec localStorage:', syncError)
     }
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des piliers:', error)
@@ -124,24 +134,37 @@ export async function loadPillars() {
     const { loadPillars: loadDefaultPillars } = await import('./pillarsStorage')
     return loadDefaultPillars()
   }
-  
+
   try {
     const records = await db.pillars
       .where('userId')
       .equals(user.id)
       .toArray()
-    
+
+    let pillars
+
     if (records.length === 0) {
       // Charger les piliers par défaut
       const { loadPillars: loadDefaultPillars } = await import('./pillarsStorage')
-      return loadDefaultPillars()
+      pillars = loadDefaultPillars()
+
+      // Sauvegarder les piliers par défaut dans IndexedDB
+      await savePillars(pillars)
+    } else {
+      pillars = {}
+      records.forEach(record => {
+        pillars[record.pillarId] = record.data
+      })
     }
-    
-    const pillars = {}
-    records.forEach(record => {
-      pillars[record.pillarId] = record.data
-    })
-    
+
+    // Synchroniser avec localStorage pour la compatibilité
+    try {
+      const { savePillars: saveToLocalStorage } = await import('./pillarsStorage')
+      saveToLocalStorage(pillars)
+    } catch (syncError) {
+      console.warn('Erreur lors de la synchronisation avec localStorage:', syncError)
+    }
+
     return pillars
   } catch (error) {
     console.error('Erreur lors du chargement des piliers:', error)

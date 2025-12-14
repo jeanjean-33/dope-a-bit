@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { PillarCard } from '../components/PillarCard'
-import { getPillarsList } from '../utils/pillarsStorage'
 import { getDateKey } from '../utils/dates'
-import { getDayData, saveDayData } from '../utils/dbStorage'
+import { getDayData, saveDayData, loadPillars } from '../utils/dbStorage'
 import { calculateDayScore } from '../utils/calculations'
 
 export function TrackerView() {
@@ -10,13 +9,14 @@ export function TrackerView() {
   const [dayData, setDayData] = useState({})
   const [pillarsList, setPillarsList] = useState([])
   const [loading, setLoading] = useState(true)
-  
+
   useEffect(() => {
     async function loadData() {
       const data = await getDayData(todayKey)
       setDayData(data)
-      const pillars = getPillarsList()
-      setPillarsList(pillars)
+      const pillars = await loadPillars()
+      const pillarsArray = Object.values(pillars)
+      setPillarsList(pillarsArray)
       setLoading(false)
     }
     loadData()
