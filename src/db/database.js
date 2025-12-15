@@ -33,11 +33,23 @@ export class DopeABitDB extends Dexie {
       }
     })
 
-    // Version 21 - Version actuelle pour corriger le problème de version
-    this.version(21).stores({
-      users: '++id, username, email, passwordHash, createdAt',
+    // Version 22 - Ajout de la vérification d'email
+    this.version(22).stores({
+      users: '++id, username, email, passwordHash, createdAt, emailVerified, verificationToken, verificationTokenExpires',
       dayData: '++id, userId, dateKey, [userId+dateKey], data, createdAt, updatedAt',
       pillars: '++id, userId, pillarId, data, updatedAt'
+    }).upgrade(async tx => {
+      // Migration : ajouter les champs de vérification email aux utilisateurs existants
+      const users = await tx.table('users').toCollection().toArray()
+      for (const user of users) {
+        if (user.emailVerified === undefined) {
+          await tx.table('users').update(user.id, {
+            emailVerified: true, // Les utilisateurs existants sont considérés comme vérifiés
+            verificationToken: null,
+            verificationTokenExpires: null
+          })
+        }
+      }
     })
 
     this.users = this.table('users')

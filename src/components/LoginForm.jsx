@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { LogIn, UserPlus, Mail, Lock, User } from 'lucide-react'
-import { loginUser, registerUser } from '../utils/auth'
+import { LogIn, UserPlus, Mail, Lock, User, RefreshCw } from 'lucide-react'
+import { loginUser, registerUser, resendVerificationEmail } from '../utils/auth'
 import { useAuth } from '../contexts/AuthContext'
 import { cn } from '../utils/cn'
 
@@ -11,13 +11,15 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showEmailVerification, setShowEmailVerification] = useState(false)
+  const [verificationUsername, setVerificationUsername] = useState('')
   const { login } = useAuth()
   
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
-    
+
     try {
       if (isLogin) {
         const result = await loginUser(username, password)
@@ -32,10 +34,16 @@ export function LoginForm() {
         }
         const result = await registerUser(username, email, password)
         if (result.success) {
-          // Après inscription, connecter automatiquement
-          const loginResult = await loginUser(username, password)
-          if (loginResult.success) {
-            login(loginResult.user)
+          if (result.requiresEmailVerification) {
+            setShowEmailVerification(true)
+            setVerificationUsername(username)
+            setIsLogin(true) // Revenir à l'onglet connexion
+          } else {
+            // Pour les utilisateurs existants ou si la vérification n'est pas requise
+            const loginResult = await loginUser(username, password)
+            if (loginResult.success) {
+              login(loginResult.user)
+            }
           }
         }
       }
@@ -45,7 +53,20 @@ export function LoginForm() {
       setLoading(false)
     }
   }
-  
+
+  const handleResendVerification = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      await resendVerificationEmail(verificationUsername)
+      setError('Un nouvel email de vérification a été envoyé')
+    } catch (err) {
+      setError(err.message || 'Erreur lors de l\'envoi de l\'email')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
       <div className="w-full max-w-md">
@@ -93,6 +114,30 @@ export function LoginForm() {
             </button>
           </div>
           
+          {/* Message de vérification email */}
+          {showEmailVerification && (
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 text-sm text-blue-400 mb-4">
+              <div className="flex items-start gap-3">
+                <Mail className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium mb-2">Vérifiez votre email</p>
+                  <p className="mb-3">
+                    Un email de vérification a été envoyé à votre adresse. Cliquez sur le lien dans l'email pour activer votre compte.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 rounded text-blue-300 text-sm transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                    Renvoyer l'email
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Formulaire */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
