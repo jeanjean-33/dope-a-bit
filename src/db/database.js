@@ -8,8 +8,8 @@ export class DopeABitDB extends Dexie {
   constructor() {
     super('DopeABitDB')
 
-    // Version unique simplifiée
-    this.version(1).stores({
+    // Version haute pour couvrir toutes les migrations précédentes
+    this.version(300).stores({
       users: '++id, username, email, passwordHash, createdAt',
       dayData: '++id, userId, dateKey, [userId+dateKey], data, createdAt, updatedAt',
       pillars: '++id, userId, pillarId, data, updatedAt'
