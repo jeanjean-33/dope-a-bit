@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Navigation } from './components/Navigation'
 import { LoginForm } from './components/LoginForm'
-import { EmailVerification } from './components/EmailVerification'
 import { TrackerView } from './views/TrackerView'
 import { DashboardView } from './views/DashboardView'
 import { ManageView } from './views/ManageView'
@@ -11,8 +9,9 @@ import { generateMockData } from './utils/mockData'
 import { getAllDayData } from './utils/dbStorage'
 
 function AppContent() {
+  const [currentView, setCurrentView] = useState('tracker')
   const { user, loading } = useAuth()
-
+  
   useEffect(() => {
     // Initialiser avec des données fictives si aucune donnée n'existe pour l'utilisateur
     if (user) {
@@ -24,7 +23,7 @@ function AppContent() {
       })
     }
   }, [user])
-
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -35,32 +34,37 @@ function AppContent() {
       </div>
     )
   }
-
+  
+  if (!user) {
+    return <LoginForm />
+  }
+  
+  const renderView = () => {
+    switch (currentView) {
+      case 'tracker':
+        return <TrackerView />
+      case 'dashboard':
+        return <DashboardView />
+      case 'manage':
+        return <ManageView />
+      default:
+        return <TrackerView />
+    }
+  }
+  
   return (
-    <Routes>
-      <Route path="/verify-email" element={<EmailVerification />} />
-      <Route path="/login" element={!user ? <LoginForm /> : <Navigate to="/" replace />} />
-      <Route path="/" element={user ? (
-        <div className="min-h-screen bg-slate-950">
-          <Navigation />
-          <Routes>
-            <Route path="/" element={<TrackerView />} />
-            <Route path="/dashboard" element={<DashboardView />} />
-            <Route path="/manage" element={<ManageView />} />
-          </Routes>
-        </div>
-      ) : <Navigate to="/login" replace />} />
-    </Routes>
+    <div className="min-h-screen bg-slate-950">
+      <Navigation currentView={currentView} onViewChange={setCurrentView} />
+      {renderView()}
+    </div>
   )
 }
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </Router>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 
