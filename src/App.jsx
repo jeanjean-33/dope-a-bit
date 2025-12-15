@@ -5,23 +5,14 @@ import { LoginForm } from './components/LoginForm'
 import { TrackerView } from './views/TrackerView'
 import { DashboardView } from './views/DashboardView'
 import { ManageView } from './views/ManageView'
-import { generateMockData } from './utils/mockData'
-import { getAllDayData } from './utils/dbStorage'
 
 function AppContent() {
   const [currentView, setCurrentView] = useState('tracker')
   const { user, loading } = useAuth()
   
   useEffect(() => {
-    // Initialiser avec des données fictives si aucune donnée n'existe pour l'utilisateur
-    if (user) {
-      getAllDayData().then(data => {
-        if (Object.keys(data).length === 0) {
-          // Générer des données fictives pour le nouvel utilisateur
-          generateMockData(30)
-        }
-      })
-    }
+    // Pas de génération automatique de données fictives pour les nouveaux utilisateurs
+    // Les habitudes commencent toutes décochées par défaut
   }, [user])
   
   if (loading) {
