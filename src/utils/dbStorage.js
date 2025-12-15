@@ -20,10 +20,7 @@ export async function getDayData(dateKey) {
 
 export async function saveDayData(dateKey, dayData) {
   const user = getCurrentUser()
-  if (!user) {
-    console.warn('Aucun utilisateur connecté, impossible de sauvegarder les données')
-    return
-  }
+  if (!user) return
   
   try {
     const existing = await db.dayData
@@ -32,13 +29,10 @@ export async function saveDayData(dateKey, dayData) {
       .first()
     
     if (existing) {
-      const updated = await db.dayData.update(existing.id, {
+      await db.dayData.update(existing.id, {
         data: dayData,
         updatedAt: new Date()
       })
-      if (updated === 0) {
-        console.warn('Aucun enregistrement mis à jour pour', dateKey)
-      }
     } else {
       await db.dayData.add({
         userId: user.id,
@@ -50,8 +44,6 @@ export async function saveDayData(dateKey, dayData) {
     }
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des données:', error)
-    // Relancer l'erreur pour permettre à l'appelant de la gérer si nécessaire
-    throw error
   }
 }
 
@@ -80,50 +72,27 @@ export async function getAllDayData() {
 export async function savePillars(pillars) {
   const user = getCurrentUser()
   if (!user) return
-
+  
   try {
-    // Récupérer les piliers existants pour les mettre à jour ou en ajouter de nouveaux
-    const existingRecords = await db.pillars
+    // Supprimer les anciens piliers de l'utilisateur
+    await db.pillars
       .where('userId')
       .equals(user.id)
-      .toArray()
-
-    // Créer un map des piliers existants par pillarId
-    const existingMap = new Map(existingRecords.map(r => [r.pillarId, r]))
-
-    // Préparer les données à sauvegarder
+      .delete()
+    
+    // Ajouter les nouveaux piliers
     const pillarsArray = Object.entries(pillars).map(([pillarId, data]) => ({
-      id: existingMap.get(pillarId)?.id, // Conserver l'id si existe
       userId: user.id,
       pillarId,
       data,
       updatedAt: new Date()
     }))
-
-    // Utiliser bulkPut pour mettre à jour ou ajouter
+    
     if (pillarsArray.length > 0) {
-      await db.pillars.bulkPut(pillarsArray)
-    }
-
-    // Supprimer les piliers qui n'existent plus
-    const currentPillarIds = new Set(Object.keys(pillars))
-    const toDelete = existingRecords.filter(r => !currentPillarIds.has(r.pillarId))
-    if (toDelete.length > 0) {
-      await db.pillars.bulkDelete(toDelete.map(r => r.id))
-    }
-
-    console.log('Piliers sauvegardés avec succès dans IndexedDB')
-
-    // Synchroniser avec localStorage pour la compatibilité
-    try {
-      const { savePillars: saveToLocalStorage } = await import('./pillarsStorage')
-      saveToLocalStorage(pillars)
-    } catch (syncError) {
-      console.warn('Erreur lors de la synchronisation avec localStorage:', syncError)
+      await db.pillars.bulkAdd(pillarsArray)
     }
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des piliers:', error)
-    throw error
   }
 }
 
@@ -134,55 +103,24 @@ export async function loadPillars() {
     const { loadPillars: loadDefaultPillars } = await import('./pillarsStorage')
     return loadDefaultPillars()
   }
-
+  
   try {
     const records = await db.pillars
       .where('userId')
       .equals(user.id)
       .toArray()
-
-    let pillars
-
+    
     if (records.length === 0) {
       // Charger les piliers par défaut
       const { loadPillars: loadDefaultPillars } = await import('./pillarsStorage')
-      pillars = loadDefaultPillars()
-
-      // Sauvegarder les piliers par défaut dans IndexedDB
-      await savePillars(pillars)
-    } else {
-      pillars = {}
-      records.forEach(record => {
-        pillars[record.pillarId] = record.data
-      })
-
-      // Migration : convertir les anciennes clés majuscules en minuscules
-      const uppercaseKeys = Object.keys(pillars).filter(key => key === key.toUpperCase() && key !== key.toLowerCase())
-      if (uppercaseKeys.length > 0) {
-        console.log('Migration: Conversion des clés majuscules en minuscules:', uppercaseKeys)
-        const migratedPillars = { ...pillars }
-
-        uppercaseKeys.forEach(oldKey => {
-          const pillarData = pillars[oldKey]
-          const newKey = oldKey.toLowerCase()
-          migratedPillars[newKey] = pillarData
-          delete migratedPillars[oldKey]
-        })
-
-        // Sauvegarder les piliers migrés
-        await savePillars(migratedPillars)
-        pillars = migratedPillars
-      }
+      return loadDefaultPillars()
     }
-
-    // Synchroniser avec localStorage pour la compatibilité
-    try {
-      const { savePillars: saveToLocalStorage } = await import('./pillarsStorage')
-      saveToLocalStorage(pillars)
-    } catch (syncError) {
-      console.warn('Erreur lors de la synchronisation avec localStorage:', syncError)
-    }
-
+    
+    const pillars = {}
+    records.forEach(record => {
+      pillars[record.pillarId] = record.data
+    })
+    
     return pillars
   } catch (error) {
     console.error('Erreur lors du chargement des piliers:', error)

@@ -2,7 +2,7 @@ const PILLARS_STORAGE_KEY = 'dope-a-bit-pillars'
 
 // Piliers par défaut
 const DEFAULT_PILLARS = {
-  sleep: {
+  SLEEP: {
     id: 'sleep',
     name: 'Hygiène du Sommeil',
     type: 'positive',
@@ -13,7 +13,7 @@ const DEFAULT_PILLARS = {
       'Douche froide'
     ]
   },
-  sport: {
+  SPORT: {
     id: 'sport',
     name: 'Sport / Mouvement',
     type: 'positive',
@@ -24,7 +24,7 @@ const DEFAULT_PILLARS = {
       'Étirements'
     ]
   },
-  learning: {
+  LEARNING: {
     id: 'learning',
     name: 'Apprentissage',
     type: 'positive',
@@ -35,7 +35,7 @@ const DEFAULT_PILLARS = {
       'Écriture'
     ]
   },
-  nature: {
+  NATURE: {
     id: 'nature',
     name: 'Exposition Nature',
     type: 'positive',
@@ -45,7 +45,7 @@ const DEFAULT_PILLARS = {
       'Marche dehors'
     ]
   },
-  overconsumption: {
+  OVERCONSUMPTION: {
     id: 'overconsumption',
     name: 'Surconsommation',
     type: 'detox',
@@ -55,7 +55,7 @@ const DEFAULT_PILLARS = {
       'Pas de fast-food'
     ]
   },
-  substances: {
+  SUBSTANCES: {
     id: 'substances',
     name: 'Substances Addictives',
     type: 'detox',
@@ -66,7 +66,7 @@ const DEFAULT_PILLARS = {
       'Pas de tabac'
     ]
   },
-  easy_stimulation: {
+  EASY_STIMULATION: {
     id: 'easy_stimulation',
     name: 'Stimulation Facile',
     type: 'detox',
@@ -108,10 +108,6 @@ export function getPillarsList() {
 
 export function resetPillarsToDefault() {
   savePillars(DEFAULT_PILLARS)
-  return DEFAULT_PILLARS
-}
-
-export function getDefaultPillars() {
   return DEFAULT_PILLARS
 }
 

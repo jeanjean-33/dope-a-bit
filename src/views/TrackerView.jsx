@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { PillarCard } from '../components/PillarCard'
-import { getDateKey } from '../utils/dates'
-import { getDayData, saveDayData, loadPillars } from '../utils/dbStorage'
+import { getPillarsList } from '../utils/pillarsStorage'
+import { getDateKey, formatDate } from '../utils/dates'
+import { getDayData, saveDayData } from '../utils/dbStorage'
 import { calculateDayScore } from '../utils/calculations'
 
 export function TrackerView() {
@@ -9,14 +10,13 @@ export function TrackerView() {
   const [dayData, setDayData] = useState({})
   const [pillarsList, setPillarsList] = useState([])
   const [loading, setLoading] = useState(true)
-
+  
   useEffect(() => {
     async function loadData() {
       const data = await getDayData(todayKey)
       setDayData(data)
-      const pillars = await loadPillars()
-      const pillarsArray = Object.values(pillars)
-      setPillarsList(pillarsArray)
+      const pillars = getPillarsList()
+      setPillarsList(pillars)
       setLoading(false)
     }
     loadData()
@@ -47,61 +47,82 @@ export function TrackerView() {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-100 mb-2">Aujourd'hui</h1>
-          <p className="text-slate-400">
-            Complétez vos piliers pour maintenir votre équilibre dopamine
-          </p>
-        </div>
-        
-        <div className="mb-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-400 mb-1">Score du jour</p>
-                <p className="text-4xl font-bold text-emerald-400">{score}%</p>
-              </div>
-              <div className="w-24 h-24 relative">
-                <svg className="transform -rotate-90" width="96" height="96">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-slate-100 mb-4">{formatDate(new Date(), 'EEEE dd MMMM yyyy').toUpperCase()}</h1>
+
+          {/* Score central */}
+          <div className="mb-6">
+            <p className="text-sm text-slate-400 mb-4">Score du jour</p>
+            <div className="flex flex-col items-center">
+              <div className="w-32 h-32 relative mb-4">
+                <svg className="transform -rotate-90" width="128" height="128">
                   <circle
-                    cx="48"
-                    cy="48"
-                    r="42"
+                    cx="64"
+                    cy="64"
+                    r="56"
                     stroke="currentColor"
                     strokeWidth="8"
                     fill="none"
                     className="text-slate-800"
                   />
                   <circle
-                    cx="48"
-                    cy="48"
-                    r="42"
+                    cx="64"
+                    cy="64"
+                    r="56"
                     stroke="currentColor"
                     strokeWidth="8"
                     fill="none"
-                    strokeDasharray={264}
-                    strokeDashoffset={264 - (score / 100) * 264}
+                    strokeDasharray={352}
+                    strokeDashoffset={352 - (score / 100) * 352}
                     strokeLinecap="round"
                     className="text-emerald-500 transition-all duration-500"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-semibold text-slate-200">{score}%</span>
+                  <span className="text-2xl font-bold text-slate-100">{score}%</span>
                 </div>
               </div>
+              <p className="text-lg text-emerald-400 font-semibold">{score}%</p>
             </div>
           </div>
+
+          <p className="text-slate-400">
+            Complétez vos piliers pour maintenir votre équilibre dopamine
+          </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {pillarsList.map(pillar => (
-            <PillarCard
-              key={pillar.id}
-              pillar={pillar}
-              dayData={dayData}
-              onUpdate={handlePillarUpdate}
-            />
-          ))}
+
+        {/* Dopamine Saine (À maintenir) */}
+        <h2 className="text-xl font-bold text-white mb-6 text-center" style={{ lineHeight: '31px' }}>Dopamine Saine <span className="text-sm text-gray-400">(À maintenir)</span></h2>
+        <div className="mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {pillarsList
+              .filter(pillar => pillar.type === 'positive')
+              .map(pillar => (
+                <PillarCard
+                  key={pillar.id}
+                  pillar={pillar}
+                  dayData={dayData}
+                  onUpdate={handlePillarUpdate}
+                />
+              ))}
+          </div>
+        </div>
+
+        {/* Dopamine Detox (Abstinence = Succès) */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-white mb-6 text-center" style={{ lineHeight: '31px' }}>Dopamine Detox <span className="text-sm text-gray-400">(Abstinence = Succès)</span></h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {pillarsList
+              .filter(pillar => pillar.type === 'detox')
+              .map(pillar => (
+                <PillarCard
+                  key={pillar.id}
+                  pillar={pillar}
+                  dayData={dayData}
+                  onUpdate={handlePillarUpdate}
+                />
+              ))}
+          </div>
         </div>
       </div>
     </div>

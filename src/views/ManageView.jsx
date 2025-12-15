@@ -1,108 +1,83 @@
 import { useState, useEffect } from 'react'
 import { PillarEditor } from '../components/PillarEditor'
 import { Plus, RotateCcw, Save } from 'lucide-react'
+import { loadPillars, savePillars, resetPillarsToDefault, getPillarsList } from '../utils/pillarsStorage'
 import { loadPillars as loadDBPillars, savePillars as saveDBPillars } from '../utils/dbStorage'
 import { cn } from '../utils/cn'
 
 export function ManageView() {
   const [pillars, setPillars] = useState({})
-  const [savedPillars, setSavedPillars] = useState({})
+  const [hasChanges, setHasChanges] = useState(false)
   const [loading, setLoading] = useState(true)
-
+  
   useEffect(() => {
     async function loadData() {
       const loadedPillars = await loadDBPillars()
       setPillars(loadedPillars)
-      setSavedPillars(loadedPillars)
       setLoading(false)
     }
     loadData()
   }, [])
-
-  const hasChanges = JSON.stringify(pillars) !== JSON.stringify(savedPillars)
-
-  const handleSavePillar = async (updatedPillar) => {
-    console.log('ManageView: Sauvegarde du pilier:', updatedPillar)
-    try {
-      const newPillars = {
-        ...pillars,
-        [updatedPillar.id]: updatedPillar
-      }
-      console.log('ManageView: Nouveaux piliers:', newPillars)
-      setPillars(newPillars)
-      await saveDBPillars(newPillars)
-      setSavedPillars(newPillars) // Met à jour les piliers sauvegardés
-      console.log('Pilier sauvegardé avec succès:', updatedPillar.name)
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde du pilier:', error)
-      alert('Erreur lors de la sauvegarde. Vérifiez la console pour plus de détails.')
+  
+  useEffect(() => {
+    // Vérifier s'il y a des changements
+    async function checkChanges() {
+      const savedPillars = await loadDBPillars()
+      const currentPillars = JSON.stringify(pillars)
+      const savedPillarsStr = JSON.stringify(savedPillars)
+      setHasChanges(currentPillars !== savedPillarsStr)
     }
+    if (!loading) {
+      checkChanges()
+    }
+  }, [pillars, loading])
+  
+  const handleSavePillar = async (updatedPillar) => {
+    const newPillars = {
+      ...pillars,
+      [updatedPillar.id]: updatedPillar
+    }
+    setPillars(newPillars)
+    await saveDBPillars(newPillars)
   }
   
   const handleDeletePillar = async (pillarId) => {
-    try {
-      const newPillars = { ...pillars }
-      delete newPillars[pillarId]
-      setPillars(newPillars)
-      await saveDBPillars(newPillars)
-      setSavedPillars(newPillars)
-      console.log('Pilier supprimé avec succès')
-    } catch (error) {
-      console.error('Erreur lors de la suppression du pilier:', error)
-      alert('Erreur lors de la suppression. Vérifiez la console pour plus de détails.')
-    }
+    const newPillars = { ...pillars }
+    delete newPillars[pillarId]
+    setPillars(newPillars)
+    await saveDBPillars(newPillars)
   }
-
+  
   const handleAddPillar = async () => {
-    try {
-      const newId = `pillar_${Date.now()}`
-      const newPillar = {
-        id: newId,
-        name: 'Nouveau Pilier',
-        type: 'positive',
-        icon: 'Moon',
-        tasks: ['Nouvelle tâche']
-      }
-
-      const newPillars = {
-        ...pillars,
-        [newId]: newPillar
-      }
-      setPillars(newPillars)
-      await saveDBPillars(newPillars)
-      setSavedPillars(newPillars)
-      console.log('Nouveau pilier ajouté avec succès')
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout du pilier:', error)
-      alert('Erreur lors de l\'ajout. Vérifiez la console pour plus de détails.')
+    const newId = `pillar_${Date.now()}`
+    const newPillar = {
+      id: newId,
+      name: 'Nouveau Pilier',
+      type: 'positive',
+      icon: 'Moon',
+      tasks: ['Nouvelle tâche']
     }
+    
+    const newPillars = {
+      ...pillars,
+      [newId]: newPillar
+    }
+    setPillars(newPillars)
+    await saveDBPillars(newPillars)
   }
-
+  
   const handleReset = async () => {
     if (window.confirm('Êtes-vous sûr de vouloir réinitialiser tous les piliers aux valeurs par défaut ? Cette action est irréversible.')) {
-      try {
-        const { getDefaultPillars } = await import('../utils/pillarsStorage')
-        const defaultPillars = getDefaultPillars()
-        setPillars(defaultPillars)
-        await saveDBPillars(defaultPillars)
-        setSavedPillars(defaultPillars)
-        console.log('Piliers réinitialisés avec succès')
-      } catch (error) {
-        console.error('Erreur lors de la réinitialisation:', error)
-        alert('Erreur lors de la réinitialisation. Vérifiez la console pour plus de détails.')
-      }
+      const defaultPillars = resetPillarsToDefault()
+      setPillars(defaultPillars)
+      await saveDBPillars(defaultPillars)
+      setHasChanges(false)
     }
   }
-
+  
   const handleSaveAll = async () => {
-    try {
-      await saveDBPillars(pillars)
-      setSavedPillars(pillars)
-      console.log('Tous les piliers sauvegardés avec succès')
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error)
-      alert('Erreur lors de la sauvegarde. Vérifiez la console pour plus de détails.')
-    }
+    await saveDBPillars(pillars)
+    setHasChanges(false)
   }
   
   const pillarsList = Object.values(pillars)

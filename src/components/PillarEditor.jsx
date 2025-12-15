@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Moon, Activity, BookOpen, Sun, ShoppingCart, Flame, Smartphone, Plus, X, Trash2, Edit2, Save } from 'lucide-react'
 import { cn } from '../utils/cn'
 
@@ -26,17 +26,10 @@ export function PillarEditor({ pillar, onSave, onDelete }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedPillar, setEditedPillar] = useState(pillar)
   const [newTask, setNewTask] = useState('')
-
-  // Synchroniser editedPillar avec pillar quand les props changent
-  useEffect(() => {
-    console.log('PillarEditor: Synchronisation editedPillar avec pillar:', pillar)
-    setEditedPillar(pillar)
-  }, [pillar])
-
+  
   const Icon = iconMap[editedPillar.icon] || Moon
   
   const handleSave = () => {
-    console.log('PillarEditor: Sauvegarde du pilier:', editedPillar)
     onSave(editedPillar)
     setIsEditing(false)
   }
@@ -48,38 +41,29 @@ export function PillarEditor({ pillar, onSave, onDelete }) {
   }
   
   const handleAddTask = () => {
-    console.log('PillarEditor: handleAddTask appelé, newTask:', newTask.trim())
     if (newTask.trim()) {
-      const newEditedPillar = {
+      setEditedPillar({
         ...editedPillar,
         tasks: [...editedPillar.tasks, newTask.trim()]
-      }
-      console.log('PillarEditor: Nouveau pilier après ajout tâche:', newEditedPillar)
-      setEditedPillar(newEditedPillar)
+      })
       setNewTask('')
     }
   }
-
+  
   const handleRemoveTask = (index) => {
-    console.log('PillarEditor: handleRemoveTask appelé, index:', index)
-    const newEditedPillar = {
+    setEditedPillar({
       ...editedPillar,
       tasks: editedPillar.tasks.filter((_, i) => i !== index)
-    }
-    console.log('PillarEditor: Nouveau pilier après suppression tâche:', newEditedPillar)
-    setEditedPillar(newEditedPillar)
+    })
   }
-
+  
   const handleUpdateTask = (index, value) => {
-    console.log('PillarEditor: handleUpdateTask appelé, index:', index, 'value:', value)
     const newTasks = [...editedPillar.tasks]
     newTasks[index] = value
-    const newEditedPillar = {
+    setEditedPillar({
       ...editedPillar,
       tasks: newTasks
-    }
-    console.log('PillarEditor: Nouveau pilier après modification tâche:', newEditedPillar)
-    setEditedPillar(newEditedPillar)
+    })
   }
   
   if (!isEditing) {
@@ -132,10 +116,7 @@ export function PillarEditor({ pillar, onSave, onDelete }) {
           <input
             type="text"
             value={editedPillar.name}
-            onChange={(e) => {
-              console.log('PillarEditor: Changement de nom:', e.target.value)
-              setEditedPillar({ ...editedPillar, name: e.target.value })
-            }}
+            onChange={(e) => setEditedPillar({ ...editedPillar, name: e.target.value })}
             className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
             placeholder="Nom du pilier"
           />
@@ -164,10 +145,7 @@ export function PillarEditor({ pillar, onSave, onDelete }) {
           <label className="block text-sm text-slate-400 mb-2">Type</label>
           <div className="flex gap-2">
             <button
-              onClick={() => {
-                console.log('PillarEditor: Changement de type: positive')
-                setEditedPillar({ ...editedPillar, type: 'positive' })
-              }}
+              onClick={() => setEditedPillar({ ...editedPillar, type: 'positive' })}
               className={cn(
                 "px-4 py-2 rounded-lg text-sm font-medium transition-all",
                 editedPillar.type === 'positive'
@@ -178,10 +156,7 @@ export function PillarEditor({ pillar, onSave, onDelete }) {
               Investissement
             </button>
             <button
-              onClick={() => {
-                console.log('PillarEditor: Changement de type: detox')
-                setEditedPillar({ ...editedPillar, type: 'detox' })
-              }}
+              onClick={() => setEditedPillar({ ...editedPillar, type: 'detox' })}
               className={cn(
                 "px-4 py-2 rounded-lg text-sm font-medium transition-all",
                 editedPillar.type === 'detox'
@@ -201,10 +176,7 @@ export function PillarEditor({ pillar, onSave, onDelete }) {
             {iconOptions.map(({ value, label, icon: IconOption }) => (
               <button
                 key={value}
-                onClick={() => {
-                  console.log('PillarEditor: Changement d\'icône:', value)
-                  setEditedPillar({ ...editedPillar, icon: value })
-                }}
+                onClick={() => setEditedPillar({ ...editedPillar, icon: value })}
                 className={cn(
                   "p-2 rounded-lg transition-all",
                   editedPillar.icon === value
