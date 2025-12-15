@@ -173,7 +173,7 @@ export function ManageView() {
             <li>Les modifications sont sauvegardées automatiquement</li>
             <li>Vous pouvez ajouter, modifier ou supprimer des tâches</li>
             <li>Les piliers "Investissement" sont à faire, les "Abstinence" sont à éviter</li>
-            <li>Un rafraîchissement de la page peut être nécessaire pour voir les changements dans le Tracker</li>
+            <li>Les changements sont automatiquement synchronisés avec le Tracker</li>
           </ul>
         </div>
       </div>

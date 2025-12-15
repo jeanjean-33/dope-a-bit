@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { PillarCard } from '../components/PillarCard'
-import { getPillarsList } from '../utils/pillarsStorage'
+import { RefreshCw } from 'lucide-react'
 import { getDateKey, formatDate } from '../utils/dates'
-import { getDayData, saveDayData } from '../utils/dbStorage'
+import { getDayData, saveDayData, loadPillars } from '../utils/dbStorage'
 import { calculateDayScore } from '../utils/calculations'
+import { cn } from '../utils/cn'
 
 export function TrackerView() {
   const todayKey = getDateKey()
@@ -15,8 +16,8 @@ export function TrackerView() {
     async function loadData() {
       const data = await getDayData(todayKey)
       setDayData(data)
-      const pillars = getPillarsList()
-      setPillarsList(pillars)
+      const pillars = await loadPillars()
+      setPillarsList(Object.values(pillars))
       setLoading(false)
     }
     loadData()
@@ -29,6 +30,15 @@ export function TrackerView() {
     }
     setDayData(newDayData)
     await saveDayData(todayKey, newDayData)
+  }
+
+  const handleRefreshData = async () => {
+    setLoading(true)
+    const data = await getDayData(todayKey)
+    setDayData(data)
+    const pillars = await loadPillars()
+    setPillarsList(Object.values(pillars))
+    setLoading(false)
   }
   
   if (loading) {
@@ -48,7 +58,21 @@ export function TrackerView() {
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-slate-100 mb-4">{formatDate(new Date(), 'EEEE dd MMMM yyyy').toUpperCase()}</h1>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <h1 className="text-3xl font-bold text-slate-100">{formatDate(new Date(), 'EEEE dd MMMM yyyy').toUpperCase()}</h1>
+            <button
+              onClick={handleRefreshData}
+              className={cn(
+                "p-2 rounded-lg transition-all",
+                "text-slate-400 hover:text-emerald-400 hover:bg-slate-800",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
+              disabled={loading}
+              title="Actualiser les données"
+            >
+              <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+            </button>
+          </div>
 
           {/* Score central */}
           <div className="mb-6">
