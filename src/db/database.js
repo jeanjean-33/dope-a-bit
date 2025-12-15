@@ -8,33 +8,8 @@ export class DopeABitDB extends Dexie {
   constructor() {
     super('DopeABitDB')
 
-    // Version 1 - Schéma initial
+    // Version unique simplifiée
     this.version(1).stores({
-      users: '++id, username, email, passwordHash, createdAt',
-      dayData: '++id, userId, dateKey, data, createdAt',
-      pillars: '++id, userId, pillarId, data, updatedAt'
-    })
-
-    // Version 2 - Ajout de l'index composé et updatedAt pour dayData
-    this.version(2).stores({
-      users: '++id, username, email, passwordHash, createdAt',
-      // Index composé [userId+dateKey] pour les requêtes rapides
-      dayData: '++id, userId, dateKey, [userId+dateKey], data, createdAt, updatedAt',
-      pillars: '++id, userId, pillarId, data, updatedAt'
-    }).upgrade(async tx => {
-      // Migration : ajouter updatedAt aux enregistrements existants de dayData
-      const dayDataRecords = await tx.table('dayData').toCollection().toArray()
-      for (const record of dayDataRecords) {
-        if (!record.updatedAt) {
-          await tx.table('dayData').update(record.id, {
-            updatedAt: record.createdAt || new Date()
-          })
-        }
-      }
-    })
-
-    // Version 21 - Version actuelle pour corriger le problème de version
-    this.version(21).stores({
       users: '++id, username, email, passwordHash, createdAt',
       dayData: '++id, userId, dateKey, [userId+dateKey], data, createdAt, updatedAt',
       pillars: '++id, userId, pillarId, data, updatedAt'
@@ -46,5 +21,6 @@ export class DopeABitDB extends Dexie {
   }
 }
 
-export const db = new DopeABitDB()
+// Initialiser la base de données seulement si nous sommes dans un environnement de navigateur
+export const db = typeof window !== 'undefined' ? new DopeABitDB() : null
 

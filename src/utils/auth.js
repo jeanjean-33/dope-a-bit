@@ -12,6 +12,10 @@ function simpleHash(password) {
 }
 
 export async function registerUser(username, email, password) {
+  if (!db) {
+    throw new Error('Base de données non disponible')
+  }
+
   try {
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await db.users
@@ -39,6 +43,10 @@ export async function registerUser(username, email, password) {
 }
 
 export async function loginUser(username, password) {
+  if (!db) {
+    throw new Error('Base de données non disponible')
+  }
+
   try {
     const user = await db.users
       .where('username').equals(username)
@@ -70,6 +78,7 @@ export async function loginUser(username, password) {
 }
 
 export function getCurrentUser() {
+  if (typeof window === 'undefined') return null
   const userStr = localStorage.getItem('currentUser')
   if (!userStr) return null
   try {
@@ -80,6 +89,7 @@ export function getCurrentUser() {
 }
 
 export function setCurrentUser(user) {
+  if (typeof window === 'undefined') return
   if (user) {
     localStorage.setItem('currentUser', JSON.stringify(user))
   } else {
@@ -88,6 +98,7 @@ export function setCurrentUser(user) {
 }
 
 export function logout() {
+  if (typeof window === 'undefined') return
   localStorage.removeItem('currentUser')
 }
 

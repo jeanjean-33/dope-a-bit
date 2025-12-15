@@ -2,9 +2,11 @@ import { db } from '../db/database'
 import { getCurrentUser } from './auth'
 
 export async function getDayData(dateKey) {
+  if (!db) return {}
+
   const user = getCurrentUser()
   if (!user) return {}
-  
+
   try {
     const record = await db.dayData
       .where('[userId+dateKey]')
@@ -19,9 +21,11 @@ export async function getDayData(dateKey) {
 }
 
 export async function saveDayData(dateKey, dayData) {
+  if (!db) return
+
   const user = getCurrentUser()
   if (!user) return
-  
+
   try {
     const existing = await db.dayData
       .where('[userId+dateKey]')
@@ -48,9 +52,11 @@ export async function saveDayData(dateKey, dayData) {
 }
 
 export async function getAllDayData() {
+  if (!db) return {}
+
   const user = getCurrentUser()
   if (!user) return {}
-  
+
   try {
     const records = await db.dayData
       .where('userId')
@@ -70,6 +76,8 @@ export async function getAllDayData() {
 }
 
 export async function savePillars(pillars) {
+  if (!db) return
+
   const user = getCurrentUser()
   if (!user) return
 
@@ -97,6 +105,12 @@ export async function savePillars(pillars) {
 }
 
 export async function loadPillars() {
+  if (!db) {
+    // Retourner les piliers par défaut si pas de base de données
+    const { loadPillars: loadDefaultPillars } = await import('./pillarsStorage')
+    return loadDefaultPillars()
+  }
+
   const user = getCurrentUser()
   if (!user) {
     // Retourner les piliers par défaut si pas d'utilisateur

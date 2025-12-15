@@ -40,7 +40,8 @@ export function LoginForm() {
         }
       }
     } catch (err) {
-      setError(err.message || 'Une erreur est survenue')
+      console.error('Erreur lors de la soumission:', err)
+      setError(err?.message || 'Une erreur est survenue')
     } finally {
       setLoading(false)
     }

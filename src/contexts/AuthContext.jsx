@@ -8,9 +8,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   
   useEffect(() => {
-    // Charger l'utilisateur au démarrage
-    const currentUser = getCurrentUser()
-    setUser(currentUser)
+    // Charger l'utilisateur au démarrage (seulement si nous sommes dans un navigateur)
+    if (typeof window !== 'undefined') {
+      const currentUser = getCurrentUser()
+      setUser(currentUser)
+    }
     setLoading(false)
   }, [])
   
