@@ -155,6 +155,24 @@ export async function loadPillars() {
       records.forEach(record => {
         pillars[record.pillarId] = record.data
       })
+
+      // Migration : convertir les anciennes clés majuscules en minuscules
+      const uppercaseKeys = Object.keys(pillars).filter(key => key === key.toUpperCase() && key !== key.toLowerCase())
+      if (uppercaseKeys.length > 0) {
+        console.log('Migration: Conversion des clés majuscules en minuscules:', uppercaseKeys)
+        const migratedPillars = { ...pillars }
+
+        uppercaseKeys.forEach(oldKey => {
+          const pillarData = pillars[oldKey]
+          const newKey = oldKey.toLowerCase()
+          migratedPillars[newKey] = pillarData
+          delete migratedPillars[oldKey]
+        })
+
+        // Sauvegarder les piliers migrés
+        await savePillars(migratedPillars)
+        pillars = migratedPillars
+      }
     }
 
     // Synchroniser avec localStorage pour la compatibilité

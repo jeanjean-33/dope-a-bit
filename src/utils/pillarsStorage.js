@@ -2,7 +2,7 @@ const PILLARS_STORAGE_KEY = 'dope-a-bit-pillars'
 
 // Piliers par défaut
 const DEFAULT_PILLARS = {
-  SLEEP: {
+  sleep: {
     id: 'sleep',
     name: 'Hygiène du Sommeil',
     type: 'positive',
@@ -13,7 +13,7 @@ const DEFAULT_PILLARS = {
       'Douche froide'
     ]
   },
-  SPORT: {
+  sport: {
     id: 'sport',
     name: 'Sport / Mouvement',
     type: 'positive',
@@ -24,7 +24,7 @@ const DEFAULT_PILLARS = {
       'Étirements'
     ]
   },
-  LEARNING: {
+  learning: {
     id: 'learning',
     name: 'Apprentissage',
     type: 'positive',
@@ -35,7 +35,7 @@ const DEFAULT_PILLARS = {
       'Écriture'
     ]
   },
-  NATURE: {
+  nature: {
     id: 'nature',
     name: 'Exposition Nature',
     type: 'positive',
@@ -45,7 +45,7 @@ const DEFAULT_PILLARS = {
       'Marche dehors'
     ]
   },
-  OVERCONSUMPTION: {
+  overconsumption: {
     id: 'overconsumption',
     name: 'Surconsommation',
     type: 'detox',
@@ -55,7 +55,7 @@ const DEFAULT_PILLARS = {
       'Pas de fast-food'
     ]
   },
-  SUBSTANCES: {
+  substances: {
     id: 'substances',
     name: 'Substances Addictives',
     type: 'detox',
@@ -66,7 +66,7 @@ const DEFAULT_PILLARS = {
       'Pas de tabac'
     ]
   },
-  EASY_STIMULATION: {
+  easy_stimulation: {
     id: 'easy_stimulation',
     name: 'Stimulation Facile',
     type: 'detox',
