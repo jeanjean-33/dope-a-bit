@@ -33,19 +33,12 @@ export function ManageView() {
   }, [pillars, loading])
   
   const handleSavePillar = async (updatedPillar) => {
-    console.log('Saving pillar:', updatedPillar)
     const newPillars = {
       ...pillars,
       [updatedPillar.id]: updatedPillar
     }
-    console.log('New pillars object:', newPillars)
     setPillars(newPillars)
-    try {
-      await saveDBPillars(newPillars)
-      console.log('Pillar saved successfully')
-    } catch (error) {
-      console.error('Error saving pillar:', error)
-    }
+    await saveDBPillars(newPillars)
   }
   
   const handleDeletePillar = async (pillarId) => {

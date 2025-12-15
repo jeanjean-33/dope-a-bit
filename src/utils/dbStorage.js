@@ -70,16 +70,10 @@ export async function getAllDayData() {
 }
 
 export async function savePillars(pillars) {
-  console.log('savePillars called with:', pillars)
   const user = getCurrentUser()
-  console.log('Current user:', user)
-  if (!user) {
-    console.warn('No user found, cannot save pillars')
-    return
-  }
+  if (!user) return
 
   try {
-    console.log('Deleting old pillars for user:', user.id)
     // Supprimer les anciens piliers de l'utilisateur
     await db.pillars
       .where('userId')
@@ -94,13 +88,8 @@ export async function savePillars(pillars) {
       updatedAt: new Date()
     }))
 
-    console.log('Pillars array to save:', pillarsArray)
-
     if (pillarsArray.length > 0) {
       await db.pillars.bulkAdd(pillarsArray)
-      console.log('Pillars saved successfully')
-    } else {
-      console.warn('No pillars to save')
     }
   } catch (error) {
     console.error('Erreur lors de la sauvegarde des piliers:', error)
@@ -108,27 +97,20 @@ export async function savePillars(pillars) {
 }
 
 export async function loadPillars() {
-  console.log('loadPillars called')
   const user = getCurrentUser()
-  console.log('Current user for loading:', user)
   if (!user) {
-    console.log('No user, loading default pillars')
     // Retourner les piliers par défaut si pas d'utilisateur
     const { loadPillars: loadDefaultPillars } = await import('./pillarsStorage')
     return loadDefaultPillars()
   }
 
   try {
-    console.log('Loading pillars from database for user:', user.id)
     const records = await db.pillars
       .where('userId')
       .equals(user.id)
       .toArray()
 
-    console.log('Found records:', records.length)
-
     if (records.length === 0) {
-      console.log('No records found, loading default pillars')
       // Charger les piliers par défaut
       const { loadPillars: loadDefaultPillars } = await import('./pillarsStorage')
       return loadDefaultPillars()
@@ -139,7 +121,6 @@ export async function loadPillars() {
       pillars[record.pillarId] = record.data
     })
 
-    console.log('Loaded pillars:', pillars)
     return pillars
   } catch (error) {
     console.error('Erreur lors du chargement des piliers:', error)
