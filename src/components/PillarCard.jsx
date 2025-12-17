@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Moon, Activity, BookOpen, Sun, ShoppingCart, Flame, Smartphone } from 'lucide-react'
 import { CircularProgress } from './CircularProgress'
 import { calculatePillarProgress } from '../utils/calculations'
@@ -15,26 +15,33 @@ const iconMap = {
 }
 
 export function PillarCard({ pillar, dayData, onUpdate }) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isManuallyExpanded, setIsManuallyExpanded] = useState(false)
   const progress = calculatePillarProgress(pillar, dayData)
+  const isExpanded = useMemo(() => progress < 100 || isManuallyExpanded, [progress, isManuallyExpanded])
   const Icon = iconMap[pillar.icon]
   const pillarData = dayData[pillar.id] || {}
   
   const handleTaskToggle = (taskIndex) => {
     const newPillarData = { ...pillarData }
     newPillarData[`task_${taskIndex}`] = !newPillarData[`task_${taskIndex}`]
-    
+
     onUpdate(pillar.id, newPillarData)
+  }
+
+  const handleCardClick = () => {
+    if (progress === 100) {
+      setIsManuallyExpanded(!isManuallyExpanded)
+    }
   }
   
   return (
     <div
       className={cn(
-        "bg-slate-900 border border-slate-800 rounded-xl p-6 cursor-pointer transition-all duration-200",
-        "hover:border-slate-700 hover:shadow-lg hover:shadow-emerald-500/10",
-        isExpanded && "col-span-full"
+        "bg-slate-900 border border-slate-800 rounded-xl p-6 transition-all duration-300 ease-in-out overflow-hidden",
+        progress === 100 ? "cursor-pointer" : "",
+        "hover:border-slate-700 hover:shadow-lg hover:shadow-emerald-500/10"
       )}
-      onClick={() => setIsExpanded(!isExpanded)}
+      onClick={handleCardClick}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -53,8 +60,13 @@ export function PillarCard({ pillar, dayData, onUpdate }) {
         </div>
         <CircularProgress progress={progress} size={64} />
       </div>
-      
-      {isExpanded && (
+
+      <div
+        className={cn(
+          "transition-all duration-300 ease-in-out overflow-hidden",
+          isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        )}
+      >
         <div className="mt-4 space-y-3 pt-4 border-t border-slate-800">
           {pillar.tasks.map((task, index) => {
             const isChecked = pillarData[`task_${index}`] || false
@@ -67,7 +79,6 @@ export function PillarCard({ pillar, dayData, onUpdate }) {
                     ? "bg-emerald-500/10 border border-emerald-500/30"
                     : "bg-slate-800/50 border border-slate-700/50 hover:border-slate-600"
                 )}
-                onClick={(e) => e.stopPropagation()}
               >
                 <input
                   type="checkbox"
@@ -85,7 +96,7 @@ export function PillarCard({ pillar, dayData, onUpdate }) {
             )
           })}
         </div>
-      )}
+      </div>
     </div>
   )
 }
