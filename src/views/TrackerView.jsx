@@ -1,27 +1,28 @@
 import { useState, useEffect } from 'react'
 import { PillarCard } from '../components/PillarCard'
-import { RefreshCw } from 'lucide-react'
-import { getDateKey, formatDate } from '../utils/dates'
+import { RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { getDateKey, formatDate, formatRelativeDate } from '../utils/dates'
 import { getDayData, saveDayData, loadPillars } from '../utils/dbStorage'
 import { calculateDayScore } from '../utils/calculations'
 import { cn } from '../utils/cn'
 
 export function TrackerView() {
-  const todayKey = getDateKey()
+  const [currentDate, setCurrentDate] = useState(new Date())
+  const currentDateKey = getDateKey(currentDate)
   const [dayData, setDayData] = useState({})
   const [pillarsList, setPillarsList] = useState([])
   const [loading, setLoading] = useState(true)
-  
+
   useEffect(() => {
     async function loadData() {
-      const data = await getDayData(todayKey)
+      const data = await getDayData(currentDateKey)
       setDayData(data)
       const pillars = await loadPillars()
       setPillarsList(Object.values(pillars))
       setLoading(false)
     }
     loadData()
-  }, [todayKey])
+  }, [currentDateKey])
   
   const handlePillarUpdate = async (pillarId, pillarData) => {
     const newDayData = {
@@ -29,12 +30,36 @@ export function TrackerView() {
       [pillarId]: pillarData
     }
     setDayData(newDayData)
-    await saveDayData(todayKey, newDayData)
+    await saveDayData(currentDateKey, newDayData)
+  }
+
+  const navigateToPreviousDay = () => {
+    const newDate = new Date(currentDate)
+    newDate.setDate(newDate.getDate() - 1)
+    setCurrentDate(newDate)
+  }
+
+  const navigateToNextDay = () => {
+    const today = new Date()
+    const newDate = new Date(currentDate)
+    newDate.setDate(newDate.getDate() + 1)
+
+    // Ne pas permettre d'aller au-delà d'aujourd'hui
+    if (newDate <= today) {
+      setCurrentDate(newDate)
+    }
+  }
+
+  const canGoForward = () => {
+    const today = new Date()
+    const tomorrow = new Date(currentDate)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    return tomorrow <= today
   }
 
   const handleRefreshData = async () => {
     setLoading(true)
-    const data = await getDayData(todayKey)
+    const data = await getDayData(currentDateKey)
     setDayData(data)
     const pillars = await loadPillars()
     setPillarsList(Object.values(pillars))
@@ -58,12 +83,38 @@ export function TrackerView() {
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <h1 className="text-3xl font-bold text-slate-100">{formatDate(new Date(), 'EEEE dd MMMM yyyy').toUpperCase()}</h1>
+          {/* Navigation temporelle */}
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <button
+              onClick={navigateToPreviousDay}
+              className="p-3 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition-all"
+              title="Jour précédent"
+            >
+              <ChevronLeft size={24} />
+            </button>
+
+            <h1 className="text-2xl font-bold text-slate-100 min-w-[200px]">
+              {formatRelativeDate(currentDate)}
+            </h1>
+
+            <button
+              onClick={navigateToNextDay}
+              disabled={!canGoForward()}
+              className={cn(
+                "p-3 rounded-lg transition-all",
+                canGoForward()
+                  ? "text-slate-400 hover:text-emerald-400 hover:bg-slate-800"
+                  : "text-slate-600 cursor-not-allowed"
+              )}
+              title="Jour suivant"
+            >
+              <ChevronRight size={24} />
+            </button>
+
             <button
               onClick={handleRefreshData}
               className={cn(
-                "p-2 rounded-lg transition-all",
+                "p-3 rounded-lg transition-all",
                 "text-slate-400 hover:text-emerald-400 hover:bg-slate-800",
                 "disabled:opacity-50 disabled:cursor-not-allowed"
               )}

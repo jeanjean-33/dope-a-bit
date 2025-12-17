@@ -40,28 +40,42 @@ export function getDaysInRange(startDate, endDate) {
   return eachDayOfInterval({ start: startDate, end: endDate })
 }
 
+export function formatRelativeDate(date) {
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  if (isSameDay(date, today)) {
+    return 'Aujourd\'hui'
+  } else if (isSameDay(date, yesterday)) {
+    return 'Hier'
+  } else {
+    return format(date, 'EEEE dd MMM', { locale: fr })
+  }
+}
+
 export function getStreak(data) {
   const today = new Date()
   let streak = 0
   let currentDate = new Date(today)
-  
+
   while (true) {
     const dateKey = getDateKey(currentDate)
     const dayData = data[dateKey]
-    
+
     if (!dayData || Object.keys(dayData).length === 0) {
       break
     }
-    
+
     const score = calculateDayScore(dayData)
     if (score === 0) {
       break
     }
-    
+
     streak++
     currentDate.setDate(currentDate.getDate() - 1)
   }
-  
+
   return streak
 }
 
